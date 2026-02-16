@@ -22,10 +22,18 @@ def _make_conn(db_path):
 
 
 class TestCLI:
-    def test_config(self):
-        result = runner.invoke(app, ["config"])
+    def test_config_show(self):
+        result = runner.invoke(app, ["config", "show"])
         assert result.exit_code == 0
         assert "Database" in result.output
+
+    def test_config_set_and_show(self, tmp_path):
+        config_toml = tmp_path / "config.toml"
+        with patch("grainlog.cli.get_config_path", return_value=config_toml), \
+             patch("grainlog.cli.set_config_value") as mock_set:
+            result = runner.invoke(app, ["config", "set", "editor", "nano"])
+            assert result.exit_code == 0
+            assert "nano" in result.output
 
     def test_new_page(self, tmp_path):
         db = tmp_path / "test.db"

@@ -106,11 +106,19 @@ grainlog tui      # 明示的にTUI起動
 
 キーバインド: `d` デイリー / `p` ページ一覧 / `s` 検索 / `q` 終了
 
-### 設定確認
+### 設定
+
+`config.toml` でエディタなどをカスタマイズできます。
 
 ```bash
-grainlog config   # DBパス等を表示
+grainlog config show             # 現在の設定一覧
+grainlog config set editor code  # エディタをVS Codeに変更
+grainlog config set editor vim   # vimに変更
+grainlog config unset editor     # デフォルトに戻す
+grainlog config path             # 設定ファイルのパス
 ```
+
+優先順位: `config.toml` > `$EDITOR` 環境変数 > デフォルト (`vi`)
 
 ## データ保存先
 

@@ -15,7 +15,17 @@ from rich.table import Table
 from rich.panel import Panel
 from rich.text import Text
 
-from grainlog.config import get_db_path, get_config_dir, save_default_daily_template
+from grainlog.config import (
+    get_config_path,
+    get_config_value,
+    get_db_path,
+    get_editor,
+    load_config,
+    save_default_daily_template,
+    set_config_value,
+    unset_config_value,
+    DEFAULTS,
+)
 from grainlog.db.connection import get_connection
 from grainlog.db.queries import (
     bulk_done_todos,
@@ -55,6 +65,9 @@ app.add_typer(todo_app, name="todo")
 
 template_app = typer.Typer(help="Template management commands.")
 app.add_typer(template_app, name="template")
+
+config_app = typer.Typer(help="Configuration management.")
+app.add_typer(config_app, name="config")
 
 console = Console()
 
@@ -179,7 +192,7 @@ def edit(title: str = typer.Argument(..., help="Page title")) -> None:
 
     current = "\n".join(_serialize(tree)) + "\n" if tree else ""
 
-    editor = os.environ.get("EDITOR", "vi")
+    editor = get_editor()
     with tempfile.NamedTemporaryFile(suffix=".md", mode="w", delete=False, encoding="utf-8") as f:
         f.write(current)
         tmp_path = f.name
@@ -447,7 +460,7 @@ def template_show() -> None:
 def template_edit() -> None:
     """Edit the daily template in $EDITOR."""
     path = save_default_daily_template()
-    editor = os.environ.get("EDITOR", "vi")
+    editor = get_editor()
     subprocess.run([editor, str(path)], check=True)
     console.print(f"[green]Template saved: {path}[/green]")
 
@@ -481,10 +494,58 @@ def tui() -> None:
     run_tui()
 
 
-@app.command()
-def config() -> None:
+# ---------------------------------------------------------------------------
+# Config commands
+# ---------------------------------------------------------------------------
+
+@config_app.command("show")
+def config_show() -> None:
     """Show current configuration."""
-    console.print(f"[bold]Database:[/bold] {get_db_path()}")
+    console.print(f"[bold]Database:[/bold]    {get_db_path()}")
+    console.print(f"[bold]Config file:[/bold] {get_config_path()}")
+    console.print("")
+    cfg = load_config()
+    table = Table(title="Settings")
+    table.add_column("Key", style="cyan")
+    table.add_column("Value")
+    table.add_column("Source", style="dim")
+    for key in sorted(set(list(DEFAULTS.keys()) + list(cfg.keys()))):
+        value = get_config_value(key)
+        if key in cfg:
+            source = "config.toml"
+        elif key == "editor" and os.environ.get("EDITOR"):
+            source = "$EDITOR"
+        else:
+            source = "default"
+        table.add_row(key, value, source)
+    console.print(table)
+
+
+@config_app.command("set")
+def config_set(
+    key: str = typer.Argument(..., help="Config key (e.g. editor)"),
+    value: str = typer.Argument(..., help="Config value (e.g. code, vim, nano)"),
+) -> None:
+    """Set a configuration value."""
+    set_config_value(key, value)
+    console.print(f"[green]Set {key} = {value}[/green]")
+
+
+@config_app.command("unset")
+def config_unset(
+    key: str = typer.Argument(..., help="Config key to remove"),
+) -> None:
+    """Remove a configuration value (revert to default)."""
+    if unset_config_value(key):
+        console.print(f"[green]Removed '{key}' from config (will use default).[/green]")
+    else:
+        console.print(f"[yellow]'{key}' is not set in config.[/yellow]")
+
+
+@config_app.command("path")
+def config_path() -> None:
+    """Show the config file path."""
+    console.print(f"[bold]Config file:[/bold] {get_config_path()}")
 
 
 def app_entry() -> None:
