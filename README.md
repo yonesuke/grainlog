@@ -5,13 +5,14 @@ Logseq風のCLIナレッジ管理ツール。アウトライナー、双方向�
 ## インストール
 
 ```bash
-uvx grainlog
+uvx --from git+https://github.com/yonesuke/grainlog.git grainlog
 ```
 
-または:
+または `uv tool` でグローバルインストール:
 
 ```bash
-pip install grainlog
+uv tool install git+https://github.com/yonesuke/grainlog.git
+grainlog today
 ```
 
 ## 使い方
@@ -122,7 +123,7 @@ SQLiteデータベースがOSのデータディレクトリに保存されます
 ## 開発
 
 ```bash
-git clone <repo>
+git clone https://github.com/yonesuke/grainlog.git
 cd grainlog
 uv sync
 uv run pytest
