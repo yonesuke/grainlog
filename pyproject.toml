@@ -1,0 +1,30 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "grainlog"
+version = "0.1.0"
+description = "Logseq-style CLI knowledge management tool with outliner, bidirectional links, and daily notes"
+readme = "README.md"
+requires-python = ">=3.11"
+license = "MIT"
+authors = [{ name = "grainlog contributors" }]
+dependencies = [
+    "typer>=0.15",
+    "rich>=13.9",
+    "textual>=1.0",
+    "platformdirs>=4.0",
+]
+
+[project.scripts]
+grainlog = "grainlog.cli:app_entry"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/grainlog"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+[dependency-groups]
+dev = ["pytest>=8.0"]
